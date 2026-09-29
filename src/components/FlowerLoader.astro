@@ -1,0 +1,98 @@
+---
+/**
+ * 加载指示器 —— 一朵团花：8 片花瓣从中心依次「剪」出来（每片延迟 80ms），
+ * 全部剪完后整体旋转 90° 消失。全站最有辨识度的小细节。
+ */
+const petal = "M0 0C7 -11 8.4 -25 0 -37C-8.4 -25 -7 -11 0 0Z";
+---
+
+<div class="loader" data-loader aria-hidden="true">
+  <svg class="loader__art" viewBox="-50 -50 100 100">
+    {
+      Array.from({ length: 8 }, (_, i) => (
+        <g transform={`rotate(${i * 45})`}>
+          <path class="loader__petal" style={`--i:${i}`} d={petal} fill-rule="evenodd"></path>
+        </g>
+      ))
+    }
+    <circle class="loader__core" cx="0" cy="0" r="5.4"></circle>
+  </svg>
+  <span class="loader__label">剪 纸</span>
+</div>
+
+<style>
+  .loader {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 14px;
+    background: var(--paper);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 320ms var(--ease-soft), visibility 320ms;
+  }
+
+  .loader.is-on {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .loader__art {
+    width: 108px;
+    height: 108px;
+    overflow: visible;
+  }
+
+  .loader__petal {
+    fill: var(--red);
+    transform-box: view-box;
+    transform-origin: 50% 50%;
+    opacity: 0;
+  }
+
+  .loader.is-on .loader__petal {
+    animation: petal-cut 1.9s var(--ease-cut) infinite;
+    animation-delay: calc(var(--i) * 80ms);
+  }
+
+  .loader__core {
+    fill: var(--gold);
+    opacity: 0;
+  }
+
+  .loader.is-on .loader__core {
+    animation: petal-cut 1.9s var(--ease-cut) infinite;
+    animation-delay: 640ms;
+  }
+
+  @keyframes petal-cut {
+    0% {
+      opacity: 0;
+      transform: scale(0.22);
+    }
+    14% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    66% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1) rotate(90deg);
+    }
+  }
+
+  .loader__label {
+    font-family: var(--font-brush);
+    font-size: 1rem;
+    letter-spacing: 0.7em;
+    text-indent: 0.7em;
+    color: var(--ink-3);
+  }
+</style>

@@ -1,0 +1,40 @@
+---
+import WorkCard from "./WorkCard.astro";
+import type { CollectionEntry } from "astro:content";
+
+export interface Props {
+  works: CollectionEntry<"works">[];
+  /** 紧凑模式下每张卡少一点留白 */
+  compact?: boolean;
+}
+
+const { works, compact = false } = Astro.props;
+---
+
+<div class:list={["gallery", compact && "gallery--compact"]}>
+  {works.map((work, i) => <WorkCard work={work} index={i} />)}
+</div>
+
+<style>
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+    gap: clamp(1.1rem, 2.4vw, 2rem);
+    align-items: start;
+  }
+
+  /* 窗格：让每张卡错开半格，像贴在窗棂的不同格子上 */
+  @media (min-width: 900px) {
+    .gallery > :global(.work:nth-child(3n + 2)) {
+      margin-top: 2.2rem;
+    }
+
+    .gallery > :global(.work:nth-child(3n)) {
+      margin-top: 0.9rem;
+    }
+  }
+
+  .gallery--compact {
+    grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+  }
+</style>

@@ -1,0 +1,22 @@
+---
+import { LATTICE_LIST } from "../lib/lattice";
+---
+
+<svg class="lattice-defs" aria-hidden="true" focusable="false">
+  <defs>
+    {
+      LATTICE_LIST.map((l) => (
+        <pattern
+          id={`lattice-${l.id}`}
+          width={l.size}
+          height={l.size}
+          patternUnits="userSpaceOnUse"
+        >
+          {l.paths.map((d) => (
+            <path class="lattice-line" style={`stroke-width:${l.width}`} d={d} />
+          ))}
+        </pattern>
+      ))
+    }
+  </defs>
+</svg>

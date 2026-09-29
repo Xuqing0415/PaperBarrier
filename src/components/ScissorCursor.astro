@@ -1,0 +1,193 @@
+---
+/**
+ * 光标：一把小剪刀 + 划痕画布
+ * - 形状是「合着」的一对剪刀，刀尖朝左上（和系统箭头一个方向），刀尖即热点
+ * - 任何底色上都看得见：不靠 CSS filter，而是把一圈描边（halo）烘进 SVG 里——
+ *   静态图形 + 只动 transform，没有滤镜就没有逐帧重绘
+ * - 每个形状都写了 fill/stroke 兜底属性：万一样式表没生效（比如 dev server 用了旧样式、
+ *   或者缓存对不上），最坏也是画出一把正常颜色的剪刀，而不是一坨实心黑
+ * - 触屏 / 窄屏 / prefers-reduced-motion 下由脚本整体关闭。
+ */
+---
+
+<div class="scissor" data-scissor data-state="idle" aria-hidden="true" transition:persist>
+  <svg viewBox="0 0 64 64" focusable="false">
+    <defs>
+      <radialGradient id="pb-cursor-spark">
+        <stop offset="0%" stop-color="#ffb74d" stop-opacity="0.9"></stop>
+        <stop offset="60%" stop-color="#ffb74d" stop-opacity="0.28"></stop>
+        <stop offset="100%" stop-color="#ffb74d" stop-opacity="0"></stop>
+      </radialGradient>
+    </defs>
+
+    <!-- 整把剪刀绕刀尖 (32,4) 转到 -45°：刀尖指向左上，手柄落在右下 -->
+    <g transform="rotate(-45 32 4)">
+      <!-- 点击「咔嚓」时从轴钉处透出的一点暖光（平时 opacity:0，靠 CSS 点亮） -->
+      <circle class="scissor__spark" cx="32" cy="30.6" r="17" fill="none" opacity="0"></circle>
+
+      <!-- 描边层：比图形本身大一圈，给剪刀画出一张「贴纸边」 -->
+      <g class="scissor__halo" fill="none" stroke="#f5f0e6" stroke-linecap="round" stroke-linejoin="round">
+        <path class="s-blade" d="M27.8 30 L30.4 5.6 L32 3.6 L33.6 5.6 L36.2 30 Z" fill="#f5f0e6" stroke-width="2.6"></path>
+        <path class="s-line" d="M29.6 31.6 26 44.2" stroke-width="6.6"></path>
+        <path class="s-line" d="M34.4 31.6 38 44.2" stroke-width="6.6"></path>
+        <circle class="s-ring" cx="24.6" cy="49.6" r="5.4" stroke-width="6.4"></circle>
+        <circle class="s-ring" cx="39.4" cy="49.6" r="5.4" stroke-width="6.4"></circle>
+      </g>
+
+      <!-- 本体 -->
+      <g class="scissor__body">
+        <path class="s-blade" d="M27.8 30 L30.4 5.6 L32 3.6 L33.6 5.6 L36.2 30 Z" fill="#1a1614" stroke="#c9a227" stroke-width="0.55" stroke-linejoin="round"></path>
+        <path class="s-seam" d="M32 5.8 V30" fill="none" stroke="#f5f0e6" stroke-width="1" stroke-linecap="round" opacity="0.8"></path>
+        <path class="s-line" d="M29.6 31.6 26 44.2" fill="none" stroke="#c8102e" stroke-width="3.4" stroke-linecap="round"></path>
+        <path class="s-line" d="M34.4 31.6 38 44.2" fill="none" stroke="#c8102e" stroke-width="3.4" stroke-linecap="round"></path>
+        <circle class="s-ring" cx="24.6" cy="49.6" r="5.4" fill="none" stroke="#c8102e" stroke-width="3.2"></circle>
+        <circle class="s-ring" cx="39.4" cy="49.6" r="5.4" fill="none" stroke="#c8102e" stroke-width="3.2"></circle>
+        <circle class="s-pin" cx="32" cy="30.6" r="2.4" fill="#c9a227"></circle>
+      </g>
+    </g>
+  </svg>
+</div>
+<canvas class="scratch" data-scratch aria-hidden="true" transition:persist></canvas>
+
+<style>
+  .scissor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 64px;
+    height: 64px;
+    /* 光标要压在一切之上：首屏那张红纸是 100、跳到正文是 200，都得让路 */
+    z-index: 900;
+    pointer-events: none;
+    opacity: 0;
+    /* 还没拿到指针位置之前先藏在画外，免得左上角停着一只剪刀幽灵 */
+    transform: translate3d(-200px, -200px, 0);
+    /* 这一层只负责「在哪儿」：一个纯 translate，没有过渡，鼠标才跟手。
+       缩放（hover 涨一点、点击缩一下）交给下面的 svg。 */
+    will-change: transform;
+    transition: opacity 200ms linear;
+  }
+
+  /* 真正拿到过指针位置之后才现身。
+     「活没活」同时记在元素自己的 data-live 上：Astro 换页会把 <html> 的 class 整个换掉，
+     而 transition:persist 的节点连属性一起活下来 —— 站内跳转时剪刀不会先消失一下再回来。 */
+  :global(html.has-scissor.is-live) .scissor,
+  .scissor[data-live] {
+    opacity: 1;
+  }
+
+  .scissor svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    /* 「开合」只剩尺度上的一点呼吸，形状始终是合着的 ——
+       ⚠ 缩放必须挂在 svg 上，不能挂在 .scissor 上：按 CSS Transforms L2，
+       独立的 scale 是乘在 transform 外面的，写在外层会把 translate 一起放大 ——
+       x≈1200 时剪刀会瞬间朝右下偏出 100px，鼠标一碰到能点的东西就「跳」一下。
+       刀尖 (32, 4) 是缩放原点，涨缩时刀尖仍钉在指针上。 */
+    transform-origin: 32px 4px;
+    scale: 1;
+    will-change: scale;
+    transition: scale 220ms var(--ease-lift);
+  }
+
+  /* —— 描边层 —— 颜色和粗细在这里统一覆盖上面的兜底属性 —— */
+  .scissor__halo {
+    fill: none;
+    stroke: var(--cursor-halo);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .scissor__halo .s-blade {
+    fill: var(--cursor-halo);
+    stroke-width: 2.6px;
+  }
+
+  .scissor__halo .s-line {
+    stroke-width: 6.6px;
+  }
+
+  .scissor__halo .s-ring {
+    stroke-width: 6.4px;
+  }
+
+  /* —— 本体 —— */
+  .scissor__body .s-blade {
+    fill: var(--ink);
+    stroke: var(--gold);
+    stroke-width: 0.55px;
+    stroke-linejoin: round;
+  }
+
+  /* 两片刀中间那道缝 —— 它才是「合起来」而不是「一片刀」的凭据 */
+  .scissor__body .s-seam {
+    fill: none;
+    stroke: var(--paper);
+    stroke-width: 1px;
+    stroke-linecap: round;
+    opacity: 0.8;
+  }
+
+  .scissor__body .s-line {
+    fill: none;
+    stroke: var(--cursor-red);
+    stroke-width: 3.4px;
+    stroke-linecap: round;
+  }
+
+  .scissor__body .s-ring {
+    fill: none;
+    stroke: var(--cursor-red);
+    stroke-width: 3.2px;
+  }
+
+  .scissor__body .s-pin {
+    fill: var(--gold);
+  }
+
+  /* 点击的暖光：只改 opacity，走合成，不碰 filter */
+  .scissor__spark {
+    fill: url(#pb-cursor-spark);
+    opacity: 0;
+    transition: opacity 220ms var(--ease-soft);
+  }
+
+  /* hover 到能点的东西：微微涨一点，形状还是合着的 */
+  .scissor[data-state="hover"] svg {
+    scale: 1.09;
+  }
+
+  /* 点击「咔嚓」：往下一缩，轴钉那儿亮一下 */
+  .scissor[data-state="cut"] svg {
+    scale: 0.93;
+  }
+
+  .scissor[data-state="cut"] .scissor__spark {
+    opacity: 0.9;
+    transition-duration: 90ms;
+  }
+
+  .scratch {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 899;
+    pointer-events: none;
+  }
+
+  /* 只有剪刀真的显示出来了才藏系统光标；否则加载后那几秒会一个光标都没有 */
+  :global(html.has-scissor.is-live),
+  :global(html.has-scissor.is-live *) {
+    cursor: none !important;
+  }
+
+  @media (max-width: 899px), (hover: none) {
+    .scissor,
+    .scratch {
+      display: none;
+    }
+  }
+</style>

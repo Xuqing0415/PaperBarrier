@@ -1,0 +1,120 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+export interface Props {
+  post: CollectionEntry<"posts">;
+  index?: number;
+}
+
+const { post, index = 0 } = Astro.props;
+const d = post.data;
+const fmt = new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long", day: "numeric" });
+---
+
+<article class="post-item" data-reveal="unfold" style={`--d:${index * 70}ms`}>
+  <a class="post-item__link" href={`/posts/${post.id}`}>
+    <time class="post-item__date" datetime={d.date.toISOString()}>
+      {fmt.format(d.date)}
+    </time>
+    <div class="post-item__body">
+      <h3 class="post-item__title">{d.title}</h3>
+      <p class="post-item__summary">{d.summary}</p>
+      {
+        d.tags.length > 0 && (
+          <span class="post-item__tags">
+            {d.tags.map((t) => (
+              <span class="tag">{t}</span>
+            ))}
+          </span>
+        )
+      }
+    </div>
+    <span class="post-item__arrow" aria-hidden="true">→</span>
+  </a>
+</article>
+
+<style>
+  .post-item {
+    border-top: 1px solid var(--paper-edge);
+  }
+
+  .post-item:last-child {
+    border-bottom: 1px solid var(--paper-edge);
+  }
+
+  .post-item__link {
+    display: grid;
+    grid-template-columns: 9.5rem 1fr auto;
+    gap: 1.6rem;
+    align-items: start;
+    padding: 1.5rem 0.4rem;
+    transition: background-color var(--t-micro) linear, padding-left var(--t-lift) var(--ease-lift);
+  }
+
+  .post-item__link:hover {
+    background: color-mix(in srgb, var(--paper-2) 70%, transparent);
+    padding-left: 1rem;
+  }
+
+  .post-item__date {
+    padding-top: 0.34rem;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-4);
+  }
+
+  .post-item__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.34rem;
+  }
+
+  .post-item__title {
+    margin: 0;
+    font-size: 1.32rem;
+    transition: color var(--t-micro) linear;
+  }
+
+  .post-item__link:hover .post-item__title {
+    color: var(--red);
+  }
+
+  .post-item__summary {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--ink-3);
+    max-width: 62ch;
+  }
+
+  .post-item__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.32rem;
+    margin-top: 0.3rem;
+  }
+
+  .post-item__arrow {
+    padding-top: 0.3rem;
+    color: var(--ink-4);
+    transition: transform var(--t-lift) var(--ease-lift), color var(--t-micro) linear;
+  }
+
+  .post-item__link:hover .post-item__arrow {
+    transform: translateX(6px);
+    color: var(--red);
+  }
+
+  @media (max-width: 720px) {
+    .post-item__link {
+      grid-template-columns: 1fr auto;
+      gap: 0.4rem 1rem;
+      padding: 1.2rem 0.2rem;
+    }
+
+    .post-item__date {
+      grid-column: 1 / -1;
+      padding-top: 0;
+    }
+  }
+</style>

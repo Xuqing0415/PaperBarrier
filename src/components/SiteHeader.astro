@@ -1,0 +1,220 @@
+---
+import ThemeToggle from "./ThemeToggle.astro";
+import SoundToggle from "./SoundToggle.astro";
+import { SITE } from "../config";
+
+export interface Props {
+  path?: string;
+}
+const { path = "/" } = Astro.props;
+
+const nav = [
+  { href: "/", label: "首页" },
+  { href: "/works", label: "作品" },
+  { href: "/posts", label: "手记" },
+  { href: "/about", label: "关于" },
+];
+
+const active = (href: string): boolean =>
+  href === "/" ? path === "/" || path === "" : path.startsWith(href);
+---
+
+<header class="site-header">
+  <div class="wrap site-header__inner">
+    <a class="brand" href="/" aria-label={`${SITE.name} · 回到首页`}>
+      <span class="brand__seal" aria-hidden="true">{SITE.seal}</span>
+      <span class="brand__text">
+        <b>{SITE.name}</b>
+        <small>{SITE.nameEn}</small>
+      </span>
+    </a>
+
+    <nav class="site-nav" aria-label="主导航">
+      {
+        nav.map((item) => (
+          <a
+            class="site-nav__link"
+            href={item.href}
+            aria-current={active(item.href) ? "page" : undefined}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="site-header__tools">
+      <SoundToggle />
+      <ThemeToggle />
+    </div>
+  </div>
+  <span class="site-header__perf" aria-hidden="true"></span>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    /* 不用 backdrop-filter：磨砂玻璃每帧都要重算背面模糊，鼠标划过页头时会顿。
+       宣纸本来也不是半透明的 —— 整片实色纸反而更贴题，也便宜。 */
+    background: var(--paper);
+    transition: background-color var(--t-theme) var(--ease-soft);
+  }
+
+  /* 底边做成「沿虚线剪开」的针孔线 */
+  .site-header__perf {
+    display: block;
+    height: 1px;
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--paper-edge) 0 7px,
+      transparent 7px 15px
+    );
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    min-height: var(--header-h);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.62rem;
+    margin-right: auto;
+  }
+
+  .brand__seal {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 3px;
+    background: var(--red);
+    color: #fff6e8;
+    font-family: var(--font-brush);
+    font-size: 1.2rem;
+    line-height: 1;
+    box-shadow: var(--sh-1);
+    transform: rotate(-3deg);
+    transition: transform var(--t-lift) var(--ease-lift), background-color var(--t-theme) var(--ease-soft);
+  }
+
+  .brand:hover .brand__seal {
+    transform: rotate(3deg) translateY(-2px);
+  }
+
+  .brand__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.16;
+  }
+
+  .brand__text b {
+    font-family: var(--font-brush);
+    font-size: 1.22rem;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+  }
+
+  .brand__text small {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .site-nav__link {
+    position: relative;
+    padding: 0.42rem 0.72rem;
+    font-family: var(--font-serif);
+    font-size: 0.98rem;
+    letter-spacing: 0.14em;
+    color: var(--ink-3);
+    transition: color var(--t-micro) var(--ease-soft);
+  }
+
+  .site-nav__link::after {
+    content: "";
+    position: absolute;
+    left: 0.72rem;
+    right: 0.72rem;
+    bottom: 0.16rem;
+    height: 1.5px;
+    background: var(--red);
+    transform: scaleX(0);
+    transition: transform var(--t-micro) var(--ease-cut);
+  }
+
+  .site-nav__link:hover {
+    color: var(--ink);
+  }
+
+  .site-nav__link:hover::after,
+  .site-nav__link[aria-current="page"]::after {
+    transform: scaleX(1);
+  }
+
+  .site-nav__link[aria-current="page"] {
+    color: var(--red);
+  }
+
+  .site-header__tools {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  @media (max-width: 720px) {
+    .site-header__inner {
+      gap: 0.5rem;
+    }
+
+    .brand__text small {
+      display: none;
+    }
+
+    .site-nav__link {
+      padding: 0.36rem 0.44rem;
+      font-size: 0.9rem;
+      letter-spacing: 0.06em;
+    }
+
+    .site-nav__link::after {
+      left: 0.44rem;
+      right: 0.44rem;
+    }
+  }
+
+  /* 很窄的屏（≤460px）：让导航单独占一行 —— 品牌和两个开关一行，四个栏目一行。
+     硬挤在一行里的话「纸上生花」会被从中间掰断、栏目名竖着排，
+     还不如多给一行，反正页头是 sticky 的，多这一行不影响阅读。 */
+  @media (max-width: 460px) {
+    .site-header__inner {
+      flex-wrap: wrap;
+      min-height: 0;
+      padding-block: 0.5rem;
+      gap: 0.45rem 0.6rem;
+    }
+
+    .site-header__tools {
+      order: 2;
+    }
+
+    .site-nav {
+      order: 3;
+      flex-basis: 100%;
+      justify-content: space-between;
+    }
+  }
+</style>

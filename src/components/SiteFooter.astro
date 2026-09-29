@@ -1,0 +1,101 @@
+---
+import { SITE } from "../config";
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap site-footer__inner">
+    <div class="site-footer__mark">
+      <span class="site-footer__seal" aria-hidden="true">纸</span>
+      <p class="site-footer__line">{SITE.tagline}</p>
+    </div>
+
+    <nav class="site-footer__nav" aria-label="页脚导航">
+      <a class="link" href="/works">作品</a>
+      <a class="link" href="/posts">手记</a>
+      <a class="link" href="/about">关于</a>
+      <a class="link" href="/rss.xml">RSS</a>
+    </nav>
+
+    <p class="site-footer__copy">
+      © {year} {SITE.name} · 用剪刀和代码做的
+      <span class="site-footer__dot" aria-hidden="true"></span>
+      纹样由 <code>src/lib/papercut.ts</code> 生成 · 实拍图放在 <code>src/assets/works/</code>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    position: relative;
+    z-index: 2;
+    margin-top: clamp(4rem, 12vh, 9rem);
+    padding: 2.6rem 0 3.2rem;
+    border-top: 1px solid var(--paper-edge);
+    background: color-mix(in srgb, var(--paper-2) 60%, transparent);
+  }
+
+  .site-footer__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.2rem 2rem;
+  }
+
+  .site-footer__mark {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .site-footer__seal {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1.5px solid var(--red);
+    border-radius: 3px;
+    color: var(--red);
+    font-family: var(--font-brush);
+    font-size: 1.05rem;
+    transform: rotate(-4deg);
+  }
+
+  .site-footer__line {
+    margin: 0;
+    font-family: var(--font-serif);
+    letter-spacing: 0.26em;
+    color: var(--ink-2);
+  }
+
+  .site-footer__nav {
+    display: flex;
+    gap: 1.1rem;
+    font-size: 0.92rem;
+  }
+
+  .site-footer__copy {
+    flex: 1 1 100%;
+    margin: 0;
+    padding-top: 0.4rem;
+    color: var(--ink-4);
+    font-size: 0.8rem;
+  }
+
+  .site-footer__copy code {
+    font-family: var(--font-mono);
+    font-size: 0.94em;
+    color: var(--ink-3);
+  }
+
+  .site-footer__dot {
+    display: inline-block;
+    width: 3px;
+    height: 3px;
+    margin: 0 0.5em;
+    border-radius: 50%;
+    background: var(--red);
+    vertical-align: middle;
+  }
+</style>

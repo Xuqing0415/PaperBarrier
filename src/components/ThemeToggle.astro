@@ -1,0 +1,48 @@
+---
+/**
+ * 昼夜切换 —— 剪纸真正的灵魂是背光。
+ */
+---
+
+<button class="icon-btn theme-toggle" type="button" data-theme-toggle aria-pressed="false">
+  <span class="sr-only">切换昼夜</span>
+  <svg class="theme-toggle__icon theme-toggle__icon--day" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4.2"></circle>
+    <g class="theme-toggle__rays">
+      <path d="M12 1.6v3M12 19.4v3M1.6 12h3M19.4 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M19.4 4.6l-2.1 2.1M6.7 17.3l-2.1 2.1"></path>
+    </g>
+  </svg>
+  <svg class="theme-toggle__icon theme-toggle__icon--night" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M20 14.2A8.4 8.4 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2Z"></path>
+    <path class="theme-toggle__glow" d="M15.4 8.2 17 9.8M17 8.2 15.4 9.8"></path>
+  </svg>
+</button>
+
+<style>
+  /* 日 / 月 两个图标叠在同一格里，一次只画一个 */
+  .theme-toggle__icon {
+    grid-area: 1 / 1;
+  }
+
+  .theme-toggle__icon--night {
+    display: none;
+  }
+
+  .theme-toggle[data-state="night"] .theme-toggle__icon--day {
+    display: none;
+  }
+
+  .theme-toggle[data-state="night"] .theme-toggle__icon--night {
+    display: block;
+  }
+
+  /* 太阳的光芒：hover 时转 45°，像光从纸背后歪了一下 */
+  .theme-toggle__rays {
+    transform-origin: 12px 12px;
+    transition: transform var(--t-micro) var(--ease-soft);
+  }
+
+  .theme-toggle:hover .theme-toggle__rays {
+    transform: rotate(45deg);
+  }
+</style>

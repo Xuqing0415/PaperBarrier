@@ -1,0 +1,31 @@
+---
+/**
+ * 音效开关 —— 默认静音，用户主动打开。
+ */
+---
+
+<button class="icon-btn sound-toggle" type="button" data-sound-toggle aria-pressed="false">
+  <span class="sr-only">音效开关</span>
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path class="sound-toggle__cone" d="M4 9.4h3.2L12 5.2v13.6L7.2 14.6H4Z"></path>
+    <g class="sound-toggle__wave">
+      <path d="M15.4 9.2a4 4 0 0 1 0 5.6"></path>
+      <path d="M17.9 6.6a7.6 7.6 0 0 1 0 10.8"></path>
+    </g>
+    <path class="sound-toggle__off" d="M16 9.6 20.4 14.4M20.4 9.6 16 14.4"></path>
+  </svg>
+</button>
+
+<style>
+  /* 关着的时候只留一个静音叉；打开才露出两道声波。
+     用 aria-pressed 而不是 data-state：这个属性写在 HTML 里，
+     首次绘制就是对的，不会先闪一下「已开启」。 */
+  .sound-toggle__wave,
+  .sound-toggle[aria-pressed="true"] .sound-toggle__off {
+    display: none;
+  }
+
+  .sound-toggle[aria-pressed="true"] .sound-toggle__wave {
+    display: block;
+  }
+</style>

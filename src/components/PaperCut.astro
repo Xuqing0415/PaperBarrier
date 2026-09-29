@@ -1,0 +1,46 @@
+---
+import { paperCut, type CutStyle, type RimStyle } from "../lib/papercut";
+
+export interface Props {
+  seed?: number;
+  folds?: number;
+  density?: number;
+  cut?: CutStyle;
+  rim?: RimStyle;
+  radius?: number;
+  /** 额外 class */
+  class?: string;
+  /** 描出刀口的金边 */
+  traced?: boolean;
+  /** 纯装饰时对读屏隐藏 */
+  decorative?: boolean;
+  label?: string;
+}
+
+const {
+  seed = 1,
+  folds = 8,
+  density = 1,
+  cut = "rosette",
+  rim,
+  radius = 100,
+  class: cls = "",
+  traced = true,
+  decorative = false,
+  label = "剪纸纹样",
+} = Astro.props;
+
+const art = paperCut({ seed, folds, density, style: cut, rim, radius });
+---
+
+<svg
+  class={`papercut ${cls}`}
+  viewBox={art.viewBox}
+  preserveAspectRatio="xMidYMid meet"
+  role={decorative ? "presentation" : "img"}
+  aria-label={decorative ? undefined : label}
+  aria-hidden={decorative ? "true" : undefined}
+>
+  <path class="papercut__paper" d={art.d} fill-rule="evenodd"></path>
+  {traced && <path class="papercut__trace" d={art.d} fill="none"></path>}
+</svg>

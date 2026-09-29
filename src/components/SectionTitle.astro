@@ -1,0 +1,26 @@
+---
+export interface Props {
+  index?: string;
+  title: string;
+  eyebrow?: string;
+  lead?: string;
+  href?: string;
+  hrefLabel?: string;
+}
+const { index, title, eyebrow, lead, href, hrefLabel = "全部" } = Astro.props;
+---
+
+<header class="section-title" data-reveal-group>
+  <div class="section-title__top">
+    {index && <span class="seal" aria-hidden="true">{index}</span>}
+    <h2 class="section-title__text" data-reveal="lift">{title}</h2>
+    {href && (
+      <a class="section-title__more link" href={href}>
+        {hrefLabel}
+        <span aria-hidden="true">→</span>
+      </a>
+    )}
+  </div>
+  {eyebrow && <p class="eyebrow section-title__eyebrow" data-reveal="unfold">{eyebrow}</p>}
+  {lead && <p class="lead section-title__lead" data-reveal="unfold">{lead}</p>}
+</header>

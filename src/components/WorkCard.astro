@@ -1,0 +1,295 @@
+---
+import PaperCut from "./PaperCut.astro";
+import { latticeById } from "../lib/lattice";
+import { coverImage } from "../lib/works-images";
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+
+export interface Props {
+  work: CollectionEntry<"works">;
+  index?: number;
+}
+
+const { work, index = 0 } = Astro.props;
+const d = work.data;
+const lat = latticeById(d.lattice);
+const href = `/work/${work.id}`;
+// 有实拍图就贴实拍图，没有就用算法折出来的那一朵
+const photo = coverImage(d.image, `works/${work.id}.md`);
+
+// 轻微随机旋转：像散落在桌面上，而不是贴在网格里
+const rot = (((d.seed * 37) % 7) - 3) * 0.55;
+---
+
+<article
+  class="work"
+  data-hover={d.hover}
+  style={`--rot:${rot}deg`}
+>
+  <div class="work__stage" data-reveal="fold" style={`--d:${(index % 3) * 90}ms`}>
+    <div class="work__light" aria-hidden="true"></div>
+    <div class="work__frame" aria-hidden="true">
+      <svg><rect width="100%" height="100%" fill={`url(#lattice-${lat.id})`}></rect></svg>
+    </div>
+    <div class="work__sheet work__sheet--b" aria-hidden="true"></div>
+    <div class="work__sheet work__sheet--a" aria-hidden="true"></div>
+    <a class:list={["work__link", photo && "work__link--photo"]} href={href} tabindex="-1" aria-hidden="true">
+      {photo ? (
+        <Image
+          class="work__art work__photo"
+          src={photo}
+          alt=""
+          widths={[300, 480, 720]}
+          sizes="(max-width: 720px) 84vw, 320px"
+        />
+      ) : (
+        <PaperCut
+          class="work__art"
+          seed={d.seed}
+          folds={d.folds}
+          density={d.density}
+          cut={d.cut}
+          rim={d.rim}
+          decorative
+        />
+      )}
+    </a>
+  </div>
+
+  <div class="work__body" data-reveal="unfold" style={`--d:${140 + (index % 3) * 90}ms`}>
+    <div class="work__meta">
+      <span class="eyebrow">{d.category}</span>
+      <span class="work__year">{d.year}</span>
+    </div>
+    <h3 class="work__title"><a href={href}>{d.title}</a></h3>
+    <p class="work__summary">{d.summary}</p>
+    <div class="work__tags">
+      <span class="tag">{lat.name}</span>
+      {d.tags.slice(0, 2).map((t) => <span class="tag">{t}</span>)}
+    </div>
+  </div>
+</article>
+
+<style>
+  .work {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.15rem 1.15rem 1.25rem;
+    border: 1px solid var(--paper-edge);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--paper-2) 92%, transparent);
+    box-shadow: var(--sh-1);
+    transform: rotate(var(--rot));
+    transition: transform var(--t-lift) var(--ease-lift),
+      box-shadow var(--t-lift) var(--ease-lift),
+      border-color var(--t-micro) linear,
+      background-color var(--t-theme) var(--ease-soft);
+  }
+
+  .work:hover {
+    box-shadow: var(--sh-3);
+    border-color: color-mix(in srgb, var(--paper-edge) 60%, var(--red));
+  }
+
+  /* —— 舞台：所有图层的参照系 —— */
+  .work__stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1 / 1;
+    perspective: 900px;
+  }
+
+  /* 背后的灯。日间不可见；夜间常亮；hover 时更亮 —— 走 opacity，走 GPU */
+  .work__light {
+    position: absolute;
+    inset: -8%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 48%, var(--glow) 0%, transparent 62%);
+    filter: blur(16px);
+    opacity: calc(var(--glow-alpha) * 0.3);
+    transition: opacity 450ms var(--ease-soft), transform 620ms var(--ease-soft);
+    z-index: 0;
+  }
+
+  /* 窗棂：用 SVG pattern 平铺，一个 rect 就够 */
+  .work__frame {
+    position: absolute;
+    inset: 0;
+    opacity: 0.34;
+    transition: opacity var(--t-micro) linear;
+    z-index: 1;
+  }
+
+  .work__frame svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* 做「层层揭开」用的纸片 */
+  .work__sheet {
+    position: absolute;
+    inset: 13% 15%;
+    border: 1px solid var(--paper-edge);
+    background: var(--paper);
+    box-shadow: var(--sh-1);
+    opacity: 0;
+    transition: transform 560ms var(--ease-lift), opacity 320ms linear;
+    z-index: 1;
+  }
+
+  .work__link {
+    position: relative;
+    display: block;
+    width: 78%;
+    z-index: 2;
+  }
+
+  .work__art {
+    width: 100%;
+    height: auto;
+    transition: transform 520ms var(--ease-lift), filter 460ms var(--ease-soft);
+  }
+
+  /* 实拍：按原比例放进方形舞台，立轴和长卷都不裁、不拉伸 */
+  .work__link--photo {
+    /* 绝对定位是必须的：让立轴照片撑不高那个 1:1 的舞台 */
+    position: absolute;
+    inset: 0;
+    width: auto;
+    /* 用 flex 而不是 grid：flex 的 max-height 百分比能落在确定的高度上 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .work__photo {
+    width: auto;
+    height: auto;
+    max-width: 86%;
+    max-height: 86%;
+    filter: drop-shadow(0 10px 20px rgba(26, 22, 20, 0.13));
+  }
+
+  /* 夜里纸贴在窗上：红纸压暗成剪影，暖光从镂空处透出来 */
+  /* 祖先必须 :global()：Astro 会给 [data-theme] 也加上 scope，那样永远匹配不到 */
+  :global([data-theme="night"]) .work__photo {
+    filter: brightness(0.44) saturate(0.92) drop-shadow(0 0 20px rgba(255, 183, 77, 0.3));
+  }
+
+  /* hover 让投影拉长时，昼夜各写一份完整表达式，免得把上面的调色覆盖掉 */
+  .work[data-hover="glow"]:hover .work__photo {
+    filter: drop-shadow(0 14px 26px rgba(255, 183, 77, 0.42));
+  }
+
+  :global([data-theme="night"]) .work[data-hover="glow"]:hover .work__photo {
+    filter: brightness(0.5) saturate(0.95) drop-shadow(0 0 30px rgba(255, 183, 77, 0.55));
+  }
+
+  /* ============ 三种 hover（按作品类型自动切换） ============ */
+
+  /* 传统团花 / 生肖：灯从背后亮起，投影拉长 */
+  .work[data-hover="glow"]:hover .work__light {
+    opacity: calc(var(--glow-alpha) * 0.3 + 0.5);
+    transform: scale(1.08);
+  }
+
+  .work[data-hover="glow"]:hover .work__frame {
+    opacity: 0.5;
+  }
+
+  .work[data-hover="glow"]:hover .work__art {
+    transform: translateY(-5px);
+    filter: drop-shadow(0 14px 26px rgba(255, 183, 77, 0.42));
+  }
+
+  /* 现代抽象：纸片翘起，随鼠标做视差（位移由 JS 写进 --tx / --ty / --rx / --ry） */
+  .work[data-hover="tilt"] .work__link {
+    transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0)
+      rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transform-style: preserve-3d;
+    transition: transform 520ms var(--ease-lift);
+  }
+
+  .work[data-hover="tilt"] .work__light {
+    transform: translate3d(var(--lx, 0px), var(--ly, 0px), 0);
+    transition: transform 620ms var(--ease-soft), opacity 450ms var(--ease-soft);
+  }
+
+  .work[data-hover="tilt"].is-live .work__link,
+  .work[data-hover="tilt"].is-live .work__light {
+    transition-duration: 120ms;
+  }
+
+  .work[data-hover="tilt"]:hover .work__frame {
+    opacity: 0.44;
+  }
+
+  /* 长卷 / 组图：层层揭开 */
+  .work[data-hover="peel"]:hover .work__sheet {
+    opacity: 1;
+  }
+
+  .work[data-hover="peel"]:hover .work__sheet--a {
+    transform: rotate(8.5deg) translate(16px, -7px);
+  }
+
+  .work[data-hover="peel"]:hover .work__sheet--b {
+    transform: rotate(-13deg) translate(-18px, 9px);
+  }
+
+  /* —— 文字 —— */
+  .work__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+  }
+
+  .work__meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .work__year {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--ink-4);
+  }
+
+  .work__title {
+    margin: 0;
+    font-size: 1.42rem;
+  }
+
+  .work__title a {
+    transition: color var(--t-micro) linear;
+  }
+
+  .work__title a:hover {
+    color: var(--red);
+  }
+
+  .work__summary {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.72;
+    color: var(--ink-3);
+  }
+
+  .work__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.34rem;
+    margin-top: 0.3rem;
+  }
+
+  @media (max-width: 720px) {
+    .work {
+      transform: none;
+    }
+  }
+</style>
