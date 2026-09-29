@@ -1,0 +1,180 @@
+---
+import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
+import { SITE, homeTitle } from "../config";
+
+import SiteHeader from "../components/SiteHeader.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import PaperNoise from "../components/PaperNoise.astro";
+import LatticeDefs from "../components/LatticeDefs.astro";
+import ScissorCursor from "../components/ScissorCursor.astro";
+import FlowerLoader from "../components/FlowerLoader.astro";
+import ParallaxBackdrop from "../components/ParallaxBackdrop.astro";
+
+export interface Props {
+  title?: string;
+  description?: string;
+  /** 首页要跑首屏剪裁，先按住内容的入场动画 */
+  hasIntro?: boolean;
+  backdrop?: boolean;
+}
+
+const {
+  title = homeTitle,
+  description = SITE.description,
+  hasIntro = false,
+  backdrop = true,
+} = Astro.props;
+
+const path = Astro.url.pathname;
+
+/* ------------------------------------------------------------------
+   页面转场「剪开」：从点击处裂开，边缘是一圈不规则的锯齿。
+   起点与终点必须顶点数相同（这里 18 个）才能插值。
+   ------------------------------------------------------------------ */
+// 锯齿的顶点数：够乱就行。每多一个顶点，转场期间每帧要多插值一次多边形，12 是性价比拐点。
+const VERTICES = 12;
+const jagged = (radius: number, unit: string): string =>
+  Array.from({ length: VERTICES }, (_, i) => {
+    const angle = ((i / VERTICES) * 360 * Math.PI) / 180;
+    const r = (i % 2 === 0 ? 1 : 0.74) * (1 + 0.05 * Math.sin(i * 2.7)) * radius;
+    const dx = (Math.cos(angle) * r).toFixed(1);
+    const dy = (Math.sin(angle) * r).toFixed(1);
+    return `calc(var(--vt-x, 50%) + ${dx}${unit}) calc(var(--vt-y, 50%) + ${dy}${unit})`;
+  }).join(", ");
+
+// 这段 <style> 在 <head> 里排在打包出来的 CSS 之前，所以每条选择器都多挂一个 :root 提权 ——
+// 否则会被 global.css 里那句 `::view-transition-new(root){animation:none}` 盖掉，
+// 「剪开」转场就静悄悄失效，只剩一层淡出。
+const transitionCss = `
+:root::view-transition-group(root) {
+  animation: none;
+}
+:root::view-transition-new(root) {
+  animation: pb-cut-open var(--t-transition) var(--ease-cut) both;
+}
+@keyframes pb-cut-open {
+  from { clip-path: polygon(${jagged(5, "px")}); }
+  to   { clip-path: polygon(${jagged(155, "vmax")}); }
+}
+`;
+---
+
+<!doctype html>
+<html lang="zh-CN" class:list={[hasIntro && "is-intro"]}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#f5f0e6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e0c0b" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+
+    {/* 在首次绘制之前定好昼夜，避免闪一下白 */}
+    <script is:inline>
+      (function () {
+        var t = "day";
+        try {
+          var saved = localStorage.getItem("pb:theme");
+          if (saved === "day" || saved === "night") {
+            t = saved;
+          } else {
+            var h = new Date().getHours();
+            t = h >= 19 || h < 6 ? "night" : "day";
+          }
+        } catch (e) {
+          /* 隐私模式：跟着时间走 */
+          var hh = new Date().getHours();
+          t = hh >= 19 || hh < 6 ? "night" : "day";
+        }
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
+
+    <ClientRouter />
+    <style is:global set:html={transitionCss}></style>
+  </head>
+
+  <body>
+    <a class="skip-to-content" href="#main">跳到正文</a>
+
+    <LatticeDefs />
+    {backdrop && <ParallaxBackdrop />}
+
+    <div class="page">
+      <SiteHeader path={path} />
+      <main id="main">
+        <slot />
+      </main>
+      <SiteFooter />
+    </div>
+
+    <PaperNoise />
+    <ScissorCursor />
+    <FlowerLoader />
+
+    <script>
+      import { initTheme } from "../scripts/theme";
+      import { initSound } from "../scripts/sound";
+      import { initNav } from "../scripts/nav";
+      import { initLoader } from "../scripts/loader";
+      import { initScroll } from "../scripts/scroll";
+      import { initReveal } from "../scripts/reveal";
+      import { initHover } from "../scripts/hover";
+      import { initCursor } from "../scripts/cursor";
+
+      // 每个 init 都是幂等的：模块只求值一次，astro:page-load 负责每次重跑。
+      const boot = (): void => {
+        initTheme();
+        initSound();
+        initNav();
+        initLoader();
+        initScroll();
+        initReveal();
+        initHover();
+        initCursor();
+      };
+
+      boot();
+      document.addEventListener("astro:page-load", boot);
+    </script>
+
+    <noscript>
+      <style>
+        [data-reveal] {
+          opacity: 1 !important;
+          clip-path: none !important;
+          transform: none !important;
+        }
+      </style>
+    </noscript>
+  </body>
+</html>
+
+<style>
+  .page {
+    position: relative;
+    z-index: 1;
+  }
+
+  .skip-to-content {
+    position: absolute;
+    top: -100px;
+    left: 1rem;
+    z-index: 200;
+    padding: 0.6rem 1rem;
+    background: var(--red);
+    color: #fff6e8;
+    font-size: 0.9rem;
+    transition: top var(--t-micro) var(--ease-cut);
+  }
+
+  .skip-to-content:focus-visible {
+    top: 0.6rem;
+  }
+</style>

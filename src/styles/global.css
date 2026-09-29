@@ -1,0 +1,719 @@
+@import "./tokens.css";
+
+/* ============================================================
+   1. 底座
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* 防止 Lenis 接管前的跳动 */
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.78;
+  letter-spacing: 0.012em;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 首屏剪裁期间锁定滚动 */
+body.is-locked {
+  overflow: hidden;
+}
+
+img,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  background: var(--red);
+  color: var(--paper);
+}
+
+:focus-visible {
+  outline: 2px dashed var(--red);
+  outline-offset: 3px;
+}
+
+/* 划痕感的分隔线 */
+hr,
+.rule {
+  border: 0;
+  height: 1px;
+  margin: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--paper-edge) 12%,
+    var(--paper-edge) 88%,
+    transparent
+  );
+}
+
+/* ============================================================
+   2. 版式
+   ============================================================ */
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0 0 0.5em;
+  font-family: var(--font-brush);
+  font-weight: 400;
+  line-height: 1.22;
+  letter-spacing: 0.02em;
+  /* 中文标题换行时尽量两边均匀，别只剩一个字掉到第二行 */
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(2.4rem, 6.4vw, 4.6rem);
+}
+
+h2 {
+  font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+}
+
+h3 {
+  font-size: clamp(1.2rem, 2.1vw, 1.5rem);
+}
+
+h4 {
+  font-size: 1.06rem;
+  font-family: var(--font-serif);
+  letter-spacing: 0.06em;
+}
+
+p {
+  margin: 0 0 1.1em;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+small {
+  font-size: 0.82em;
+}
+
+.wrap {
+  width: min(100% - 2.6rem, var(--wrap));
+  margin-inline: auto;
+}
+
+.wrap--narrow {
+  width: min(100% - 2.6rem, var(--wrap-narrow));
+  margin-inline: auto;
+}
+
+.lead {
+  font-family: var(--font-serif);
+  font-size: clamp(1rem, 1.5vw, 1.16rem);
+  line-height: 1.95;
+  color: var(--ink-2);
+  max-width: 62ch;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+/* 章节序号：小红戳 */
+.seal {
+  display: inline-grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1.5px solid var(--red);
+  border-radius: 3px;
+  color: var(--red);
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  line-height: 1;
+  transform: rotate(-4deg);
+}
+
+/* 剪纸式的下划线（一刀划过） */
+.link {
+  position: relative;
+  color: var(--ink);
+  background-image: linear-gradient(var(--red), var(--red));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 1.5px;
+  transition: background-size var(--t-micro) var(--ease-cut), color var(--t-1) linear;
+}
+
+.link:hover {
+  color: var(--red);
+  background-size: 0 1.5px;
+  background-position: 100% 100%;
+}
+
+/* ============================================================
+   3. 纸纹（全局一层，5% 透明度）
+   ============================================================ */
+
+.paper-noise {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: var(--noise-opacity);
+  mix-blend-mode: var(--noise-blend);
+  background-image: var(--noise-src);
+  background-size: 220px 220px;
+  background-repeat: repeat;
+}
+
+/* ============================================================
+   4. 按钮 / 标签
+   ============================================================ */
+
+.btn {
+  --btn-bg: var(--paper-2);
+  --btn-fg: var(--ink);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.62rem 1.15rem;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--radius);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-family: var(--font-serif);
+  font-size: 0.94rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  box-shadow: var(--sh-1);
+  transition: transform var(--t-lift) var(--ease-lift),
+    box-shadow var(--t-lift) var(--ease-lift), border-color var(--t-micro) linear,
+    background-color var(--t-micro) linear, color var(--t-micro) linear;
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sh-2);
+  border-color: var(--ink-4);
+}
+
+.btn:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+.btn--red {
+  --btn-bg: var(--red);
+  --btn-fg: #fff6e8;
+  border-color: var(--red-3);
+}
+
+.btn--red:hover {
+  --btn-bg: var(--red-2);
+  border-color: var(--red);
+}
+
+.btn--ghost {
+  --btn-bg: transparent;
+  border-style: dashed;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.14rem 0.55rem;
+  border: 1px solid var(--paper-edge);
+  border-radius: 999px;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+/* 图标按钮（页头的昼夜 / 音效开关）。
+   两个坑，都在这里堵上：
+   1. appearance:none —— 不去掉原生外观的话，鼠标划过时 Chromium 要走系统主题引擎
+      重绘那颗按钮，那一帧会明显地抖一下；接管绘制之后回归纯合成。
+   2. 命中区给足 34×34 —— 太小的话指针轻轻扫过就会让剪刀在 hover / idle 之间来回横跳，
+      看上去像卡顿。抬起的动作只作用在里面的 svg 上，按钮盒子不动，命中区才是稳定的。 */
+.icon-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: transform var(--t-lift) var(--ease-lift),
+    border-color var(--t-micro) linear, background-color var(--t-micro) linear,
+    color var(--t-micro) linear;
+}
+
+.icon-btn:hover {
+  border-color: var(--ink-4);
+  color: var(--ink);
+}
+
+.icon-btn:active {
+  transform: scale(0.96);
+}
+
+/* 打开的那一颗点成红 —— 夜里红纸会沉进背景，改用灯光的金 */
+.icon-btn[aria-pressed="true"] {
+  color: var(--red);
+  border-color: color-mix(in srgb, var(--red) 42%, var(--paper-edge));
+  background: color-mix(in srgb, var(--red) 6%, transparent);
+}
+
+[data-theme="night"] .icon-btn[aria-pressed="true"] {
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 40%, var(--paper-edge));
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+
+.icon-btn svg {
+  display: block;
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
+  /* svg 不吃指针：命中区永远等于那颗 34×34 的按钮 */
+  pointer-events: none;
+  transition: transform var(--t-lift) var(--ease-lift);
+}
+
+.icon-btn:hover svg {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 720px) {
+  .icon-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .icon-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+/* ============================================================
+   5. 剪纸图形本体
+   ============================================================ */
+
+/* 窗棂：只是描线。
+   注意 fill:none —— path 默认是黑色填充，少了这一句每根窗棂都会变成一块黑多边形。 */
+.lattice-line {
+  fill: none;
+  stroke: var(--lattice);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke var(--t-theme) var(--ease-soft);
+}
+
+.lattice-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.papercut {
+  overflow: visible;
+  width: 100%;
+  height: auto;
+}
+
+.papercut__paper {
+  fill: var(--red);
+  transition: fill var(--t-theme) var(--ease-soft);
+}
+
+.papercut__veins {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.1;
+  opacity: 0.42;
+  stroke-linecap: round;
+}
+
+[data-theme="night"] .papercut__veins {
+  opacity: 0.55;
+}
+
+/* 透光：镂空处亮起 */
+.papercut__light {
+  fill: var(--glow-2);
+  opacity: calc(var(--glow-alpha) * 0.25);
+  transition: opacity var(--t-theme) var(--ease-soft);
+}
+
+/* ============================================================
+   6. 入场动效 —— 全站统一母题「展开」
+   ============================================================ */
+
+[data-reveal] {
+  opacity: 0;
+  will-change: transform, opacity, clip-path;
+}
+
+/* 展开：从中心向两侧拉开。
+   ⚠ 这里必须用 transform，不能用 clip-path —— clip-path 会把元素的可见面积裁成 0，
+   IntersectionObserver 就永远判它「不在视口里」，于是这一块内容永远不会揭晓。 */
+[data-reveal="unfold"] {
+  transform: scaleX(0.04);
+  transform-origin: 50% 50%;
+}
+
+[data-reveal="fold"] {
+  transform: scaleX(0.02);
+}
+
+[data-reveal="rise"] {
+  transform: translateY(18px);
+}
+
+[data-reveal="lift"] {
+  transform: translateY(12px);
+  filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+}
+
+[data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  transition: opacity var(--t-reveal) var(--ease-cut),
+    transform var(--t-reveal) var(--ease-cut),
+    clip-path var(--t-reveal) var(--ease-cut),
+    filter var(--t-reveal) var(--ease-cut);
+  transition-delay: var(--d, 0ms);
+}
+
+/* 展开后交还控制权：兜底撤掉 clip，避免长期占用合成层、也避免裁掉溢出的光
+   （隐藏态已经不用 clip-path 了，这一条是给别处遗留的 clip 兜底） */
+[data-reveal].is-done {
+  will-change: auto;
+  transition-delay: 0ms;
+  clip-path: none;
+}
+
+/* ============================================================
+   7. 页面转场「剪开」——从点击处裂开，边缘是锯齿
+   （关键帧在 Base.astro 里按算法注入）
+   ============================================================ */
+
+/* 昼夜切换：从按钮扩散出去的一圈光晕，像有人把灯拧亮 */
+.theme-bloom {
+  position: fixed;
+  z-index: 95;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--bloom-color, rgba(255, 183, 77, 0.34)) 0%, transparent 68%);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.theme-bloom.is-on {
+  animation: theme-bloom 1300ms var(--ease-soft) forwards;
+}
+
+@keyframes theme-bloom {
+  0% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  16% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(150);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-bloom {
+    display: none;
+  }
+}
+
+/* 先把浏览器默认的整页交叉淡出按住，后面两步再各自给 old / new 装上自己的动画。
+   （new 那条写在 Base.astro 的 transitionCss 里，靠 :root 提权才压得住这里的 animation:none） */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* 旧页：像被剪刀剪掉一角，轻微退后。
+   只动 transform，不动 opacity —— 旧页是一整张全屏快照，淡出等于每帧多混合一层，
+   而且它会一直压在掀开的新页上面（那只「双重曝光」的糊感就是这么来的）。 */
+::view-transition-old(root) {
+  animation: pb-page-away var(--t-transition) var(--ease-cut) both;
+}
+
+@keyframes pb-page-away {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(0.985);
+  }
+}
+
+/* ============================================================
+   8. 滚动条（细，像一条纸边）
+   ============================================================ */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--paper-edge) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--paper-edge);
+  border: 3px solid var(--paper);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--red);
+}
+
+/* ============================================================
+   9. 可访问性 / 降级
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Markdown 正文
+   ------------------------------------------------------------ */
+
+.prose {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 2.02;
+  color: var(--ink-2);
+}
+
+.prose > * + * {
+  margin-top: 1.15em;
+}
+
+.prose h2 {
+  margin: 2.4em 0 0.6em;
+  font-size: 1.56rem;
+  color: var(--ink);
+}
+
+.prose h3 {
+  margin: 1.9em 0 0.5em;
+  color: var(--ink);
+}
+
+.prose h2 + p,
+.prose h3 + p {
+  margin-top: 0;
+}
+
+.prose strong {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.prose a {
+  color: var(--red);
+  border-bottom: 1px solid color-mix(in srgb, var(--red) 40%, transparent);
+}
+
+.prose a:hover {
+  border-bottom-color: var(--red);
+}
+
+.prose code {
+  padding: 0.12em 0.38em;
+  border-radius: 2px;
+  background: var(--paper-3);
+  font-family: var(--font-mono);
+  font-size: 0.87em;
+}
+
+.prose pre {
+  padding: 1.1rem 1.2rem;
+  overflow-x: auto;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  font-size: 0.86rem;
+  line-height: 1.7;
+}
+
+.prose pre code {
+  padding: 0;
+  background: none;
+  font-size: 1em;
+}
+
+.prose blockquote {
+  margin-inline: 0;
+  padding: 0.2rem 0 0.2rem 1.2rem;
+  border-left: 2px solid var(--red);
+  color: var(--ink-3);
+  font-style: normal;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.4em;
+}
+
+.prose li + li {
+  margin-top: 0.4em;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+}
+
+.prose th,
+.prose td {
+  padding: 0.62rem 0.8rem;
+  border-bottom: 1px solid var(--paper-edge);
+  text-align: left;
+}
+
+.prose th {
+  font-weight: 500;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper-2) 80%, transparent);
+}
+
+.prose hr {
+  margin: 2.4em 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  [data-reveal] {
+    opacity: 1 !important;
+    clip-path: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+
+  ::view-transition-group(root) {
+    animation: none !important;
+  }
+}
+
+/* 触屏 / 小屏降级 */
+@media (max-width: 720px) {
+  :root {
+    --header-h: 60px;
+  }
+
+  body {
+    font-size: 15px;
+  }
+}
+
+@media print {
+  .paper-noise,
+  .site-header,
+  .site-footer {
+    display: none !important;
+  }
+}

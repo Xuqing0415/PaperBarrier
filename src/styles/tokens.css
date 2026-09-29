@@ -1,0 +1,132 @@
+/* ============================================================
+   设计令牌 —— 剪纸：折 · 剪 · 展开 · 透光
+   昼夜两套变量，只切换 data-theme，全站质感翻转
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* —— 纸与墨 —— */
+  --paper: #f5f0e6;        /* 宣纸米白 */
+  --paper-2: #efe7d8;
+  --paper-3: #e6dbc7;
+  --paper-edge: #d8cab0;
+  --ink: #1a1614;          /* 深墨 */
+  --ink-2: #3d3630;
+  --ink-3: #6f665c;
+  --ink-4: #a2988b;
+
+  /* —— 红 —— */
+  --red: #c8102e;          /* 中国红 */
+  --red-2: #e34234;        /* 朱砂 */
+  --red-3: #8e0b20;
+  --red-4: #5d0615;
+
+  /* —— 金 · 木 —— */
+  --gold: #c9a227;         /* 描金 */
+  --gold-2: #e3c964;
+  --lattice: #8b7355;      /* 窗棂 */
+
+  /* —— 透光 —— */
+  --glow: #ffb74d;
+  --glow-2: #ffe0ae;
+  --glow-alpha: 0;         /* 日间：正面看纸，背后无光 */
+  --glow-lift: 0.35;       /* hover 时透出的光 */
+
+  /* —— 纸纤维噪点 —— */
+  --noise-opacity: 0.055;
+  --noise-blend: multiply;
+
+  /* —— 光标剪刀：保证在任何底色上都看得见 —— */
+  /* halo 是烘进 SVG 的一圈描边，不是 filter：任何底色上都看得见，且没有逐帧滤镜开销 */
+  --cursor-halo: rgba(245, 240, 230, 0.92);
+  --cursor-red: #c8102e;
+
+  /* —— 投影（纸的厚度感） —— */
+  --sh-1: 0 1px 2px rgba(26, 22, 20, 0.07), 0 2px 6px rgba(26, 22, 20, 0.05);
+  --sh-2: 0 2px 4px rgba(26, 22, 20, 0.06), 0 8px 22px rgba(26, 22, 20, 0.09);
+  --sh-3: 0 6px 14px rgba(26, 22, 20, 0.09), 0 22px 54px rgba(26, 22, 20, 0.14);
+  --sh-lift: 0 10px 20px rgba(26, 22, 20, 0.1), 0 34px 80px rgba(26, 22, 20, 0.2);
+
+  /* —— 节奏：微交互 400~600ms，转场 700~1200ms —— */
+  --t-1: 220ms;
+  --t-micro: 420ms;
+  --t-lift: 500ms;
+  --t-reveal: 600ms;
+  --t-transition: 760ms;
+  --t-theme: 1200ms;
+
+  --ease-cut: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-lift: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 0.84, 0.44, 1);
+
+  /* —— 版式 —— */
+  --font-brush: "Ma Shan Zheng", "STXingkai", "Xingkai SC", "STKaiti", "KaiTi",
+    "Noto Serif SC", serif;
+  --font-serif: "Songti SC", "SimSun", "Source Han Serif SC", "Noto Serif SC",
+    "STSong", Georgia, serif;
+  --font-sans: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei",
+    "Hiragino Sans GB", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Consolas, monospace;
+
+  --wrap: 1180px;
+  --wrap-narrow: 760px;
+  --radius: 2px;
+  --header-h: 68px;
+}
+
+/* ============================================================
+   夜间 —— 纸贴在窗上，镂空处透出暖黄灯光
+   ============================================================ */
+[data-theme="night"] {
+  color-scheme: dark;
+
+  --paper: #0e0c0b;
+  --paper-2: #141110;
+  --paper-3: #1b1715;
+  --paper-edge: #2a2320;
+  --ink: #ece4d4;
+  --ink-2: #c8bda9;
+  --ink-3: #948a7a;
+  --ink-4: #6a6154;
+
+  --red: #7a0a1c;          /* 暗红剪影 */
+  --red-2: #a3132a;
+  --red-3: #4d0612;
+  --red-4: #2a0309;
+
+  --gold: #e0bb4a;
+  --gold-2: #f4dd8f;
+  --lattice: #453a31;
+
+  --glow: #ffb74d;
+  --glow-2: #ffd9a0;
+  --glow-alpha: 1;
+  --glow-lift: 0.55;
+
+  --noise-opacity: 0.04;
+  --noise-blend: screen;
+
+  /* 夜里刀片是浅色的，光晕反过来用深的；手柄也调亮一档才压得住黑 */
+  --cursor-halo: rgba(14, 12, 11, 0.88);
+  --cursor-red: #e34234;
+
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --sh-2: 0 4px 14px rgba(0, 0, 0, 0.55);
+  --sh-3: 0 10px 32px rgba(0, 0, 0, 0.6);
+  --sh-lift: 0 18px 60px rgba(0, 0, 0, 0.7);
+}
+
+/* 切换昼夜时的短暂过渡：像有人慢慢拧亮灯 */
+html.is-theming,
+html.is-theming *,
+html.is-theming *::before,
+html.is-theming *::after {
+  transition: background-color var(--t-theme) var(--ease-soft),
+    border-color var(--t-theme) var(--ease-soft),
+    color var(--t-theme) var(--ease-soft),
+    fill var(--t-theme) var(--ease-soft),
+    stroke var(--t-theme) var(--ease-soft),
+    box-shadow var(--t-theme) var(--ease-soft) !important;
+}
