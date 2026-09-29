@@ -1,0 +1,51 @@
+---
+import Base from "../layouts/Base.astro";
+import PaperCut from "../components/PaperCut.astro";
+import { pageTitle } from "../config";
+---
+
+<Base title={pageTitle("找不到这一页")} description="这一页像纸屑一样飘走了。">
+  <section class="nf wrap">
+    <div class="nf__art" data-reveal="fold">
+      <PaperCut seed={404} folds={7} cut="scroll" rim="spike" density={1.05} decorative />
+    </div>
+    <p class="eyebrow" data-reveal="unfold">404</p>
+    <h1 data-reveal="lift">这一页被剪掉了</h1>
+    <p class="lead" data-reveal="unfold">
+      你要找的东西大概已经像纸屑一样飘走了。回首页看看那些还贴在窗上的。
+    </p>
+    <div class="nf__actions" data-reveal="unfold">
+      <a class="btn btn--red" href="/">回首页</a>
+      <a class="btn btn--ghost" href="/works">看作品</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: clamp(3rem, 12vh, 7rem) 1.3rem;
+    text-align: center;
+  }
+
+  .nf__art {
+    width: min(46vmin, 300px);
+    margin-bottom: 1.6rem;
+    opacity: 0.92;
+  }
+
+  .nf h1 {
+    margin: 0.4rem 0 0.8rem;
+  }
+
+  .nf__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.7rem;
+    margin-top: 1.8rem;
+  }
+</style>

@@ -1,0 +1,87 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import LatticeGallery from "../../components/LatticeGallery.astro";
+import { pageTitle } from "../../config";
+
+const works = (await getCollection("works")).sort((a, b) => a.data.order - b.data.order);
+const categories = [
+  { name: "传统", note: "团花、生肖、窗花 —— 灯从背后亮起" },
+  { name: "现代", note: "同心弧与直线刀口 —— 纸片随你翘起" },
+  { name: "长卷", note: "横向铺开的构图 —— 一层层揭开" },
+];
+---
+
+<Base
+  title={pageTitle("作品")}
+  description="剪纸作品集：八件实物剪纸的实拍，红纸与黑纸，贴在冰裂纹、步步锦、万字纹、龟背锦、灯笼锦五种窗棂上。"
+>
+  <section class="works-hero wrap">
+    <p class="eyebrow" data-reveal="unfold">作品 · 共 {works.length} 件</p>
+    <h1 data-reveal="lift">窗棂画廊</h1>
+    <p class="lead" data-reveal="unfold">
+      传统题材多，就不再用规整的网格瀑布流了 —— 每件作品是贴在窗格上的一枚窗花，
+      卡片轻微随机旋转，像散落在桌面上。
+    </p>
+    <ul class="works-hero__legend" data-reveal="unfold">
+      {
+        categories.map((c) => (
+          <li>
+            <span class="works-hero__dot" aria-hidden="true" />
+            <b>{c.name}</b>
+            <span>{c.note}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="works-body wrap">
+    <LatticeGallery works={works} />
+  </section>
+</Base>
+
+<style>
+  .works-hero {
+    padding: clamp(2.4rem, 8vh, 5rem) 0 0;
+  }
+
+  .works-hero h1 {
+    margin: 0.5rem 0 0.9rem;
+  }
+
+  .works-hero__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.8rem;
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.86rem;
+    color: var(--ink-3);
+  }
+
+  .works-hero__legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .works-hero__legend b {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: 0.1em;
+  }
+
+  .works-hero__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+  }
+
+  .works-body {
+    padding-top: clamp(2.4rem, 7vh, 4.4rem);
+  }
+</style>

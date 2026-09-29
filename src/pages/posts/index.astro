@@ -1,0 +1,124 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/PostCard.astro";
+import PaperCut from "../../components/PaperCut.astro";
+import { pageTitle } from "../../config";
+
+const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const byYear = new Map<number, typeof posts>();
+for (const post of posts) {
+  const y = post.data.date.getFullYear();
+  const list = byYear.get(y) ?? [];
+  list.push(post);
+  byYear.set(y, list);
+}
+const years = [...byYear.keys()].sort((a, b) => b - a);
+const allTags = [...new Set(posts.flatMap((p) => p.data.tags))].sort();
+---
+
+<Base title={pageTitle("手记")} description="关于折、剪、透光和一点代码的记录。">
+  <section class="posts-hero wrap">
+    <div class="posts-hero__text">
+      <p class="eyebrow" data-reveal="unfold">手记 · 共 {posts.length} 篇</p>
+      <h1 data-reveal="lift">写在纸背</h1>
+      <p class="lead" data-reveal="unfold">
+        做这件手工活的时候写下来的东西。一半是技法 ——
+        折数为什么就是对称重数、三种刀口怎么配、背光怎么来；
+        另一半是自言自语，比如一把剪刀为什么要合起来。
+      </p>
+      {
+        allTags.length > 0 && (
+          <ul class="posts-hero__tags" data-reveal="unfold">
+            {allTags.map((t) => (
+              <li class="tag">{t}</li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+    <div class="posts-hero__art" data-reveal="fold">
+      <PaperCut seed={58} folds={12} cut="grid" density={0.98} decorative />
+    </div>
+  </section>
+
+  <section class="posts-body wrap">
+    {
+      years.map((year) => (
+        <div class="posts-year" data-reveal-group>
+          <h2 class="posts-year__label">
+            <span class="seal" aria-hidden="true">{String(year).slice(2)}</span>
+            <span>{year}</span>
+          </h2>
+          <div class="posts-year__list">
+            {byYear.get(year)!.map((post, i) => (
+              <PostCard post={post} index={i} />
+            ))}
+          </div>
+        </div>
+      ))
+    }
+  </section>
+</Base>
+
+<style>
+  .posts-hero {
+    display: grid;
+    grid-template-columns: 1fr minmax(180px, 280px);
+    align-items: center;
+    gap: clamp(1.6rem, 5vw, 3.6rem);
+    padding-top: clamp(2.4rem, 8vh, 5rem);
+  }
+
+  .posts-hero h1 {
+    margin: 0.5rem 0 0.9rem;
+  }
+
+  .posts-hero__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 1.6rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .posts-hero__art {
+    width: 100%;
+    opacity: 0.9;
+  }
+
+  .posts-year {
+    padding-top: clamp(2.6rem, 7vh, 4.4rem);
+  }
+
+  .posts-year__label {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 0 0 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.24em;
+    color: var(--ink-4);
+  }
+
+  .posts-year__list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  @media (max-width: 720px) {
+    .posts-hero {
+      grid-template-columns: 1fr;
+    }
+
+    .posts-hero__art {
+      max-width: 200px;
+      order: -1;
+    }
+  }
+</style>

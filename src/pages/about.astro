@@ -1,0 +1,225 @@
+---
+import Base from "../layouts/Base.astro";
+import PaperCut from "../components/PaperCut.astro";
+import { SITE, pageTitle } from "../config";
+
+const stack = [
+  { k: "框架", v: "Astro —— 静态输出，零 JS 起步，交互按需水合" },
+  { k: "动效", v: "GSAP + ScrollTrigger，时间线控制" },
+  { k: "平滑滚动", v: "Lenis" },
+  { k: "纸屑 / 划痕", v: "原生 Canvas" },
+  { k: "描边 / 镂空", v: "SVG path + mask + clip-path" },
+  { k: "音效", v: "Web Audio 合成，不加载任何音频文件" },
+];
+
+const principles = [
+  { t: "折", d: "页面转场从点击处裂开；长卷类作品层层揭开" },
+  { t: "剪", d: "首屏沿轮廓游走一圈；标题「凸起」；光标是一把合着的小剪刀" },
+  { t: "展开", d: "所有内容从折叠态展开（scaleX 0.04 → 1，从中心向外）" },
+  { t: "透光", d: "hover、昼夜模式、作品详情 —— 光永远从纸的背后过来" },
+];
+---
+
+<Base title={pageTitle("关于")} description={`${SITE.name}是一个剪纸主题的个人博客：作品是实拍的红纸与黑纸，纹样与窗棂由算法折出来，昼夜两种背光。`}>
+  <section class="about wrap--narrow">
+    <header class="about__head" data-reveal-group>
+      <p class="eyebrow" data-reveal="unfold">关于</p>
+      <h1 data-reveal="lift">{SITE.name}</h1>
+      <p class="lead" data-reveal="unfold">
+        「{SITE.name}」说的是折、剪、展开的那一下：花不是画上去的，是折出来、剪出来的。
+        光从纸背后过来，镂空的地方亮着，实的地方暗着 —— 剪纸最迷人的一刻，其实不是剪，是透光。
+      </p>
+    </header>
+
+    <div class="about__art" data-reveal="fold">
+      <div class="about__lamp" aria-hidden="true"></div>
+      <PaperCut seed={47} folds={12} cut="wave" rim="smooth" density={1.1} label="云起 · 十二折同心弧" />
+    </div>
+
+    <div class="about__body prose" data-reveal="unfold">
+      <p>
+        我是一个喜欢剪纸的人，也是一个写代码的人。这个站想证明的是同一件事：
+        <strong>折纸这件事本身是有数学结构的</strong>。
+      </p>
+      <p>
+        把一张圆纸对折 k 次，你手上是一块 360/2<sup>k</sup> 度的楔形。在这块楔形上下剪刀，
+        展开之后剪痕会以圆心为中心重复 2<sup>k</sup> 次 —— 团花不是画出来的，是折出来的。
+      </p>
+      <p>
+        画廊里挂的都是真东西：红纸、黑纸、一把剪刀，拍下来再一张张抠干净。
+        而首屏那朵团花、背后的窗棂和看细节用的镜片不是图片，是参数 —— 折数、刀法、疏密，加一颗种子。
+        它们由 <code>src/lib/papercut.ts</code> 在构建期算出来，一张 2–6 KB 的 SVG 就顶掉几百 KB 的位图，
+        而且能跟着昼夜模式一起变色。
+      </p>
+      <p>
+        这个站首先是本笔记本。<a href="/posts">手记</a>里写的多半不是成品，是过程 ——
+        哪一刀剪坏了，哪个动效删掉了，哪一层磨砂玻璃其实是可以不用的。
+        作品可以只放结果，笔记本得放过程，不然过两年自己都忘了当时在想什么。
+      </p>
+    </div>
+
+    <section class="about__block" aria-labelledby="principles">
+      <h2 id="principles" data-reveal="lift">全站母题：折 · 剪 · 展开 · 透光</h2>
+      <p class="about__note" data-reveal="unfold">
+        所有动效必须能归到下面四类里，否则删掉。统一的母题比堆砌十种炫酷效果更高级。
+      </p>
+      <dl class="about__principles" data-reveal-group>
+        {
+          principles.map((p) => (
+            <div data-reveal="unfold">
+              <dt>{p.t}</dt>
+              <dd>{p.d}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+
+    <section class="about__block" aria-labelledby="stack">
+      <h2 id="stack" data-reveal="lift">技术选型</h2>
+      <dl class="about__stack" data-reveal-group>
+        {
+          stack.map((s) => (
+            <div data-reveal="unfold">
+              <dt>{s.k}</dt>
+              <dd>{s.v}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+
+    <section class="about__block" aria-labelledby="a11y">
+      <h2 id="a11y" data-reveal="lift">几条自我约束</h2>
+      <ul class="about__rules prose" data-reveal="unfold">
+        <li>每屏最多 1–2 个主动效。剪纸作品已经够好看了，动画是衬托。</li>
+        <li>所有微交互 400–600ms，所有转场 700–1200ms。不出现 200ms 的抽搐感。</li>
+        <li>优先 <code>transform</code> 与 <code>opacity</code> —— 它们走 GPU 合成，不触发重排。</li>
+        <li>
+          尊重 <code>prefers-reduced-motion</code>。开启时首屏压缩成 0.4 秒淡出，
+          视差与剪刀光标直接关闭，转场退化为淡入。
+        </li>
+        <li>移动端降级：纸屑减半，视差从 4 层减到 2 层，隐藏剪刀光标。</li>
+      </ul>
+    </section>
+
+    <p class="about__contact" data-reveal="unfold">
+      想聊剪纸、动效或者算法生成，欢迎来信。
+    </p>
+  </section>
+</Base>
+
+<style>
+  .about {
+    padding-top: clamp(2rem, 7vh, 4rem);
+  }
+
+  .about__head h1 {
+    margin: 0.4rem 0 0.8rem;
+    letter-spacing: 0.16em;
+  }
+
+  .about__art {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: min(58vmin, 380px);
+    margin: clamp(2.2rem, 6vh, 3.4rem) auto 0;
+  }
+
+  .about__art > :global(.papercut) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .about__lamp {
+    position: absolute;
+    inset: -20%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 46%, var(--glow) 0%, transparent 82%);
+    filter: blur(30px);
+    opacity: calc(var(--glow-alpha) * 0.72);
+    transition: opacity var(--t-theme) var(--ease-soft);
+  }
+
+  .about__body {
+    margin-top: clamp(2.4rem, 7vh, 4rem);
+  }
+
+  .about__block {
+    margin-top: clamp(3rem, 8vh, 4.6rem);
+  }
+
+  .about__block h2 {
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+  }
+
+  .about__note {
+    margin: 0.4rem 0 1.6rem;
+    color: var(--ink-3);
+    font-size: 0.94rem;
+  }
+
+  .about__principles,
+  .about__stack {
+    display: grid;
+    gap: 0;
+    margin: 0;
+  }
+
+  .about__principles > div,
+  .about__stack > div {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 1.2rem;
+    padding: 1rem 0.2rem;
+    border-top: 1px solid var(--paper-edge);
+  }
+
+  .about__principles > div:last-child,
+  .about__stack > div:last-child {
+    border-bottom: 1px solid var(--paper-edge);
+  }
+
+  .about__principles dt {
+    font-family: var(--font-brush);
+    font-size: 1.8rem;
+    line-height: 1.2;
+    color: var(--red);
+  }
+
+  .about__principles dd,
+  .about__stack dd {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 0.96rem;
+  }
+
+  .about__stack dt {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    color: var(--ink-4);
+    padding-top: 0.2rem;
+  }
+
+  .about__rules {
+    padding-left: 1.3em;
+  }
+
+  .about__contact {
+    margin: clamp(2.6rem, 7vh, 4rem) 0 0;
+    padding-top: 1.4rem;
+    border-top: 1px dashed var(--paper-edge);
+    font-family: var(--font-serif);
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 720px) {
+    .about__principles > div,
+    .about__stack > div {
+      grid-template-columns: 1fr;
+      gap: 0.2rem;
+    }
+  }
+</style>

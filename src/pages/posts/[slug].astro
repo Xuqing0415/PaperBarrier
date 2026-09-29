@@ -1,0 +1,178 @@
+---
+import { getCollection, render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import PaperCut from "../../components/PaperCut.astro";
+import { pageTitle } from "../../config";
+
+export async function getStaticPaths() {
+  const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
+    (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+  );
+  return posts.map((post, i) => ({
+    params: { slug: post.id },
+    props: {
+      post,
+      prev: posts[i + 1] ?? null,
+      next: posts[i - 1] ?? null,
+    },
+  }));
+}
+
+const { post, prev, next } = Astro.props;
+const { Content } = await render(post);
+const d = post.data;
+const fmt = new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long", day: "numeric" });
+
+// 每篇文章配一朵由标题派生的团花，稳定的哈希 → 稳定的种子
+const seed = [...post.id].reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 9973, 7);
+---
+
+<Base title={pageTitle(d.title, "手记")} description={d.summary}>
+  <article class="post wrap--narrow">
+    <nav class="post__crumb" aria-label="面包屑">
+      <a class="link" href="/posts">手记</a>
+      <span aria-hidden="true">/</span>
+      <time datetime={d.date.toISOString()}>{fmt.format(d.date)}</time>
+    </nav>
+
+    <header class="post__head" data-reveal-group>
+      <h1 class="post__title" data-reveal="lift">{d.title}</h1>
+      <p class="post__summary lead" data-reveal="unfold">{d.summary}</p>
+      <div class="post__mark" data-reveal="fold" aria-hidden="true">
+        <PaperCut seed={seed % 150} folds={6 + (seed % 7)} cut="rosette" density={0.95} decorative />
+      </div>
+    </header>
+
+    <div class="post__body prose" data-reveal="unfold">
+      <Content />
+    </div>
+
+    {
+      d.tags.length > 0 && (
+        <ul class="post__tags" data-reveal="unfold">
+          {d.tags.map((t) => (
+            <li class="tag">{t}</li>
+          ))}
+        </ul>
+      )
+    }
+
+    <nav class="post__nav" aria-label="前后文章">
+      {
+        prev ? (
+          <a class="post__navItem" href={`/posts/${prev.id}`}>
+            <span class="eyebrow">更早</span>
+            <b>{prev.data.title}</b>
+          </a>
+        ) : (
+          <span />
+        )
+      }
+      {
+        next ? (
+          <a class="post__navItem post__navItem--next" href={`/posts/${next.id}`}>
+            <span class="eyebrow">更新</span>
+            <b>{next.data.title}</b>
+          </a>
+        ) : (
+          <span />
+        )
+      }
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .post {
+    padding-top: clamp(1.6rem, 5vh, 3rem);
+  }
+
+  .post__crumb {
+    display: flex;
+    gap: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-4);
+  }
+
+  .post__head {
+    position: relative;
+    margin-top: clamp(1.4rem, 4vh, 2.2rem);
+    padding-bottom: clamp(1.6rem, 4vh, 2.4rem);
+    border-bottom: 1px dashed var(--paper-edge);
+  }
+
+  .post__title {
+    margin: 0 0 0.7rem;
+    max-width: 24ch;
+  }
+
+  .post__summary {
+    margin: 0;
+    max-width: 46ch;
+  }
+
+  /* 标题旁边一小朵由标题派生的团花 */
+  .post__mark {
+    position: absolute;
+    right: 0;
+    bottom: clamp(1.6rem, 4vh, 2.4rem);
+    width: clamp(72px, 12vw, 116px);
+    opacity: 0.95;
+  }
+
+  .post__body {
+    margin-top: clamp(1.8rem, 5vh, 2.8rem);
+  }
+
+  .post__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 2.4rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .post__nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: clamp(3rem, 8vh, 5rem);
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--paper-edge);
+  }
+
+  .post__navItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    transition: border-color var(--t-micro) linear, background-color var(--t-micro) linear;
+  }
+
+  .post__navItem:hover {
+    border-color: var(--paper-edge);
+    background: color-mix(in srgb, var(--paper-2) 70%, transparent);
+  }
+
+  .post__navItem b {
+    font-family: var(--font-brush);
+    font-size: 1.24rem;
+    font-weight: 400;
+  }
+
+  .post__navItem--next {
+    text-align: right;
+    align-items: flex-end;
+  }
+
+  @media (max-width: 720px) {
+    .post__mark {
+      display: none;
+    }
+  }
+</style>

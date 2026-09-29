@@ -1,0 +1,257 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import IntroCut from "../components/IntroCut.astro";
+import PaperCut from "../components/PaperCut.astro";
+import SectionTitle from "../components/SectionTitle.astro";
+import LatticeGallery from "../components/LatticeGallery.astro";
+import PostCard from "../components/PostCard.astro";
+import { SITE, homeTitle } from "../config";
+
+const works = (await getCollection("works")).sort((a, b) => a.data.order - b.data.order);
+const featured = works.filter((w) => w.data.featured).slice(0, 4);
+const posts = (await getCollection("posts", ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 4);
+
+// 首屏剪出来的那朵，和主视觉是同一朵（同一个 seed）
+const hero = { seed: 7, folds: 12, cut: "rosette" as const, rim: "scallop" as const, density: 1.02 };
+---
+
+<Base hasIntro title={homeTitle} description={SITE.description}>
+  <IntroCut />
+
+  <!-- ==================== 主视觉 ==================== -->
+  <section class="hero">
+    <p class="hero__eyebrow eyebrow" data-reveal="unfold" style="--d:60ms">
+      折 · 剪 · 展开 · 透光
+    </p>
+
+    <div class="hero__stage" data-reveal="fold" style="--d:120ms">
+      <div class="hero__light" aria-hidden="true"></div>
+      <PaperCut
+        class="hero__art"
+        seed={hero.seed}
+        folds={hero.folds}
+        cut={hero.cut}
+        rim={hero.rim}
+        density={hero.density}
+        label="团花主视觉：十二折"
+      />
+    </div>
+
+    <h1 class="hero__title" data-reveal="lift" style="--d:320ms">纸上生花</h1>
+
+    <p class="hero__lead lead" data-reveal="unfold" style="--d:420ms">
+      我在这里剪点纸，也写点字。<br />
+      画廊里挂的是实拍的红纸与黑纸；<br />
+      手记里记的是折数、刀口和一点代码 ——<br />
+      想到哪写到哪。
+    </p>
+
+    <div class="hero__actions" data-reveal="unfold" style="--d:520ms">
+      <a class="btn btn--red" href="/posts">读手记</a>
+      <a class="btn btn--ghost" href="/works">看作品</a>
+    </div>
+
+    <span class="hero__hint" aria-hidden="true">
+      <span>向下展开</span>
+      <svg viewBox="0 0 24 24"><path d="M12 4v14M6 13l6 6 6-6" /></svg>
+    </span>
+  </section>
+
+  <!-- ==================== 手记（个人博客的主频道，排在最前） ==================== -->
+  <section class="section wrap" aria-labelledby="posts-heading">
+    <SectionTitle
+      index="一"
+      title="最近在写"
+      eyebrow="隔三差五记一笔：剪坏了什么，想通了什么"
+      lead="这里更像我的笔记本。技法写下来就成了手记；写不明白的地方，多半是我还没想明白。"
+      href="/posts"
+      hrefLabel="全部手记"
+    />
+    <div class="section__body section__body--posts" data-reveal-group>
+      {posts.map((post, i) => <PostCard post={post} index={i} />)}
+    </div>
+  </section>
+
+  <!-- ==================== 窗棂画廊 ==================== -->
+  <section class="section wrap" aria-labelledby="works-heading">
+    <SectionTitle
+      index="二"
+      title="窗棂画廊"
+      eyebrow="每件作品就是贴在窗格上的一枚窗花"
+      lead="传统团花透光，现代抽象翘起，长卷层层揭开 —— 每张卡片的交互都跟作品的体裁匹配。"
+      href="/works"
+      hrefLabel="全部作品"
+    />
+    <div class="section__body">
+      <LatticeGallery works={featured} />
+    </div>
+  </section>
+
+  <!-- ==================== 关于 ==================== -->
+  <section class="section wrap" aria-labelledby="about-heading">
+    <div class="about-teaser" data-reveal-group>
+      <div class="about-teaser__art" data-reveal="fold">
+        <PaperCut seed={96} folds={8} cut="wave" density={0.92} decorative />
+      </div>
+      <div class="about-teaser__text" data-reveal="unfold">
+        <span class="seal" aria-hidden="true">三</span>
+        <h2 id="about-heading">关于「{SITE.name}」</h2>
+        <p class="lead">
+          「{SITE.name}」说的是折起来、下剪、展开的那一下 —— 花不是画上去的，是剪出来的。
+          光从纸背后过来，镂空的地方亮着，实的地方暗着：剪纸最迷人的一刻，其实不是剪，是透光。
+        </p>
+        <a class="btn" href="/about">多说几句</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ==================== 主视觉 ==================== */
+  .hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: clamp(2.4rem, 7vh, 5rem) 1.3rem clamp(3.4rem, 9vh, 6rem);
+    text-align: center;
+  }
+
+  .hero__eyebrow {
+    margin: 0 0 0.6rem;
+  }
+
+  .hero__stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: min(46vmin, 350px);
+    margin-bottom: 0.6rem;
+  }
+
+  .hero__art {
+    position: relative;
+    width: 100%;
+    z-index: 1;
+    filter: drop-shadow(0 10px 26px rgba(26, 22, 20, 0.14));
+  }
+
+  /* 背后的灯：夜里从镂空处透出来 */
+  .hero__light {
+    position: absolute;
+    inset: -14%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 46%, var(--glow) 0%, transparent 80%);
+    filter: blur(26px);
+    opacity: calc(var(--glow-alpha) * 0.62);
+    transition: opacity var(--t-theme) var(--ease-soft);
+  }
+
+  .hero__title {
+    margin: 0.2rem 0 0.7rem;
+    font-size: clamp(2.6rem, 8vw, 5.2rem);
+    letter-spacing: 0.1em;
+    text-indent: 0.1em;
+  }
+
+  .hero__lead {
+    margin: 0 auto;
+    max-width: 44ch;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.7rem;
+    margin-top: 1.6rem;
+  }
+
+  .hero__hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: clamp(2rem, 6vh, 3.6rem);
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.3em;
+    color: var(--ink-4);
+  }
+
+  .hero__hint svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    animation: hint-bob 2.6s var(--ease-soft) infinite;
+  }
+
+  @keyframes hint-bob {
+    0%,
+    100% {
+      transform: translateY(-2px);
+      opacity: 0.55;
+    }
+    50% {
+      transform: translateY(3px);
+      opacity: 1;
+    }
+  }
+
+  /* ==================== 通用章节 ==================== */
+  .section {
+    padding-top: clamp(3rem, 9vh, 6rem);
+  }
+
+  .section__body {
+    margin-top: clamp(1.6rem, 4vh, 2.8rem);
+  }
+
+  .section__body--posts {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ==================== 关于 ==================== */
+  .about-teaser {
+    display: grid;
+    grid-template-columns: minmax(200px, 300px) 1fr;
+    align-items: center;
+    gap: clamp(1.6rem, 5vw, 4rem);
+    padding: clamp(1.6rem, 4vw, 3rem);
+    border: 1px solid var(--paper-edge);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--paper-2) 80%, transparent);
+  }
+
+  .about-teaser__art {
+    width: 100%;
+  }
+
+  .about-teaser__text h2 {
+    margin: 0.7rem 0 0.6rem;
+  }
+
+  .about-teaser__text .btn {
+    margin-top: 1.2rem;
+  }
+
+  @media (max-width: 720px) {
+    .about-teaser {
+      grid-template-columns: 1fr;
+      text-align: center;
+      justify-items: center;
+    }
+
+    .about-teaser__art {
+      max-width: 220px;
+    }
+  }
+</style>
